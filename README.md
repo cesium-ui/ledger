@@ -2,98 +2,208 @@
 
 A Stripe-inspired financial ledger system built with Python and FastAPI.
 
-Ledger is a learning project focused on understanding backend development, REST APIs, and financial transaction systems.
+Ledger is a learning project focused on backend development, REST APIs, and understanding how financial systems handle money movement.
 
-## Current Features
+The project is being developed incrementally, starting with basic account operations and gradually moving towards a more robust financial ledger.
 
-* [x] FastAPI application setup
-* [x] API health/status endpoint
-* [x] Create accounts
-* [x] Retrieve all accounts
-* [x] Retrieve an account by ID
-* [x] Deposit money into accounts
-* [x] HTTP error handling and request validation
-* [ ] Withdrawals
-* [ ] Account-to-account transfers
-* [ ] Double-entry bookkeeping
-* [ ] Transaction history
-* [ ] PostgreSQL integration
-* [ ] Automated testing
+Inspired by [Stripe Engineering — Ledger: Tracking and Validating Money Movement](https://stripe.com/blog/ledger-stripe-system-for-tracking-and-validating-money-movement).
+
+## Features
+
+- [x] FastAPI application setup
+- [x] API health/status endpoint
+- [x] Create accounts
+- [x] Retrieve all accounts
+- [x] Retrieve an account by ID
+- [x] Deposit money
+- [x] Withdraw money
+- [x] Transfer money between accounts
+- [x] Transaction history
+- [x] Request validation and HTTP error handling
+- [ ] Double-entry bookkeeping
+- [ ] PostgreSQL integration
+- [ ] Automated testing
 
 ## Tech Stack
 
-* **Language:** Python
-* **Framework:** FastAPI
-* **Validation:** Pydantic
-* **Server:** Uvicorn
+| Technology | Purpose |
+|---|---|
+| Python | Backend programming |
+| FastAPI | Building REST APIs |
+| Pydantic | Request validation |
+| Uvicorn | Running the development server |
+| Git & GitHub | Version control |
 
 ## Getting Started
+
+Follow these steps to run Ledger locally.
+
+### Prerequisites
+
+Make sure you have:
+
+- Python 3.10 or newer
+- pip
+- Git
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/ledger.git
+git clone https://github.com/cesium-ui/ledger.git
 cd ledger
 ```
 
-### 2. Install dependencies
+### 2. Create a virtual environment
+
+**Windows:**
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+**Linux / macOS:**
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Start the development server
+### 4. Run the server
 
 ```bash
 uvicorn main:app --reload
 ```
 
-### 4. Explore the API
+The development server should now be running at:
 
-Once the server is running:
+`http://127.0.0.1:8000`
 
-* API: http://127.0.0.1:8000
-* Swagger UI: http://127.0.0.1:8000/docs
-* ReDoc: http://127.0.0.1:8000/redoc
+## API Documentation
 
-## API Endpoints
+Ledger uses FastAPI's automatically generated API documentation.
 
-| Method | Endpoint                         | Description           |
-| ------ | -------------------------------- | --------------------- |
-| GET    | `/`                              | API information       |
-| GET    | `/accounts`                      | Retrieve all accounts |
-| POST   | `/addacc`                        | Create a new account  |
-| GET    | `/accounts/{account_id}`         | Retrieve an account   |
-| POST   | `/accounts/{account_id}/deposit` | Deposit money         |
+Once the server is running, visit:
+
+| Resource | URL |
+|---|---|
+| API root | http://127.0.0.1:8000 |
+| Swagger UI | http://127.0.0.1:8000/docs |
+| ReDoc | http://127.0.0.1:8000/redoc |
+
+You can use Swagger UI to explore endpoints, provide request data, and test API operations directly from your browser.
+
+## Available Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Get API information |
+| GET | `/accounts` | Retrieve all accounts |
+| POST | `/addacc` | Create a new account |
+| GET | `/accounts/{account_id}` | Retrieve an account |
+| POST | `/accounts/{account_id}/deposit` | Deposit money |
+| POST | `/accounts/{account_id}/withdraw` | Withdraw money |
+| POST | `/transfer` | Transfer money between accounts |
+| GET | `/transactions` | Retrieve transaction history |
+
+## Example Requests
+
+### Create an account
+
+`POST /addacc`
+
+```json
+{
+  "name": "Alice",
+  "currency": "INR"
+}
+```
+
+### Deposit money
+
+`POST /accounts/1/deposit`
+
+```json
+{
+  "amount": 1000
+}
+```
+
+### Withdraw money
+
+`POST /accounts/1/withdraw`
+
+```json
+{
+  "amount": 500
+}
+```
+
+### Transfer money
+
+`POST /transfer`
+
+```json
+{
+  "from_account": 1,
+  "to_account": 2,
+  "amount": 500
+}
+```
+
+## Project Structure
+
+```text
+Ledger/
+├── ledger/
+│   ├── __init__.py
+│   ├── accounts.py
+│   ├── engine.py
+│   └── transactions.py
+├── tests/
+├── main.py
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
 ## Current Limitations
 
-This is an early-stage prototype.
+Ledger is currently an early-stage prototype.
 
-* Account data is stored in memory.
-* Data resets when the server restarts.
-* Financial amounts currently use floating-point numbers.
-* Transactions are not yet implemented using double-entry bookkeeping.
-* No persistent database is connected.
+- Data is stored in memory and resets when the server restarts.
+- No database or persistent storage is connected yet.
+- Financial amounts currently use floating-point numbers.
+- Double-entry bookkeeping has not yet been implemented.
+- Automated tests are not yet available.
+- Production-level transaction atomicity and concurrency control are not implemented.
 
-These limitations will be addressed as development progresses.
+## Roadmap
 
-## Project Roadmap
+- [x] Basic account management
+- [x] Deposits and withdrawals
+- [x] Account transfers
+- [x] Transaction history
+- [ ] Modular backend architecture
+- [ ] Double-entry bookkeeping
+- [ ] PostgreSQL integration
+- [ ] Automated testing with Pytest
+- [ ] Transaction atomicity and concurrency control
+- [ ] Idempotency
+- [ ] Audit trails and reconciliation
 
-The long-term goal is to build a reliable financial ledger system incorporating:
+## Project Status
 
-1. Account management
-2. Deposits and withdrawals
-3. Account transfers
-4. Double-entry bookkeeping
-5. Transaction consistency and atomicity
-6. Idempotency
-7. PostgreSQL persistence
-8. Automated testing
-9. Concurrency control
-10. Audit trails and reconciliation
+- **Version:** 0.1.0
+- **Status:** Under active development
+- **Purpose:** Learning and experimentation
 
-## Status
+---
 
-**Version:** 0.1.0
-**Development:** In Progress
+Built as a hands-on exploration of backend engineering and financial infrastructure.
