@@ -1,9 +1,16 @@
+# Python cache
 __pycache__/
 *.py[cod]
-.venv/
+
+# Pytest
+.pytest_cache/
+
+# Virtual environments
 venv/
+.venv/
+
+# Environment variables
 .env
-.idea/
+
+# IDE
 .vscode/
-tempCodeRunnerFile
-tempCodeRunnerFile.*
