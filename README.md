@@ -16,7 +16,7 @@ Python · FastAPI · Pydantic · Uvicorn · Pytest
 ### Setup
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/cesium-ui/ledger
 cd Ledger
 
 python -m venv .venv
