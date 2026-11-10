@@ -35,6 +35,10 @@ API documentation: http://127.0.0.1:8000/docs
 ```bash
 python -m pytest -v
 ```
+### Inspiration
 
-### Status
-Educational project : currently focused on persistent storage and reliable financial transactions. Not intended for production use.
+Inspired by Stripe Engineering's article:
+
+[Ledger: Stripe’s system for tracking and validating money movement](https://stripe.com/blog/ledger-stripe-system-for-tracking-and-validating-money-movement) — Ilya Ganelin, February 2024.
+
+This project is a simplified implementation inspired by the concepts discussed in the article.
