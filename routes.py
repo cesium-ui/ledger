@@ -1,15 +1,45 @@
-from fastapi import APIRouter
-from ledger.accounts import accounts
-from fastapi import HTTPException
+
+from decimal import Decimal
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from ledger.transactions import create_transaction, get_transactions
+
+from ledger.accounts import (
+    create_account,
+    get_account,
+    get_all_accounts,
+    deposit as deposit_account,
+    withdraw as withdraw_account,
+    transfer_account,
+)
+from ledger.transactions import get_transactions
 
 
-class Account(BaseModel):
+router = APIRouter()
+
+
+# Request Models
+
+class CreateAccountRequest(BaseModel):
     name: str
     currency: str
 
-router = APIRouter()
+
+class DepositRequest(BaseModel):
+    amount: Decimal
+
+
+class WithdrawRequest(BaseModel):
+    amount: Decimal
+
+
+class TransferRequest(BaseModel):
+    from_account: int
+    to_account: int
+    amount: Decimal
+
+
+# Root
 
 @router.get("/")
 def read_root():
@@ -20,132 +50,135 @@ def read_root():
         "version": "0.1.0"
     }
 
+
+# Accounts
+
 @router.get("/accounts")
 def get_acc():
-    return {"accounts": accounts}
+    return {"accounts": get_all_accounts()}
+
 
 @router.post("/addacc")
-def add_acc(data: Account):
-    new_acc = {
-"id": len(accounts)+1,
-"name": data.name,
-"currency": data.currency,
-"balance": 0
-}
-    accounts.append(new_acc)
-    return new_acc
+def add_acc(data: CreateAccountRequest):
+    return create_account(
+        name=data.name,
+        currency=data.currency
+    )
+
 
 @router.get("/accounts/{account_id}")
 def by_accid(account_id: int):
-    result = next((x for x in accounts if x["id"] == account_id ),None)
-    if result is None:
-        raise HTTPException(
-    status_code=404,
-    detail="Account not found"
-)
-    else:
-        return result
+    result = get_account(account_id)
 
-class WithdrawRequest(BaseModel):
-    amount: float
-@router.post("/accounts/{account_id}/withdraw")
-def withdraw(account_id: int,data: WithdrawRequest):
-    result = next((x for x in accounts if x["id"] == account_id), None)
     if result is None:
-        raise HTTPException(
-    status_code=404,
-    detail="Account not found"
-)
-    if data.amount <=0:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid withdrawal amount"
-        )
-    if data.amount > result["balance"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Withdraw amount cannot br greater than balance"
-)
-    else:
-        result["balance"] -= data.amount
-        create_transaction(
-            amount=data.amount,
-            from_account=account_id,
-            to_account=None,
-            transaction_type="withdrawal"
-        )
-        return result
-
-class DepositRequest(BaseModel):
-    amount: float
-@router.post("/accounts/{account_id}/deposit")
-def deposit(account_id: int,data: DepositRequest):
-    result = next((x for x in accounts if x["id"] == account_id), None)
-    if result is None:
-        raise HTTPException(
-    status_code=404,
-    detail="Account not found"
-)
-    if data.amount <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid deposit amount"
-)
-    else:
-        result["balance"] += data.amount
-        create_transaction(
-    amount=data.amount,
-    from_account=None,
-    to_account=account_id,
-    transaction_type="deposit"
-)
-        return result
-
-class TransferRequest(BaseModel):
-    from_account: int
-    to_account: int
-    amount: float
-@router.post("/transfer")
-def transfer(data: TransferRequest):
-    result1 = next((x for x in accounts if x["id"]==data.from_account),None)
-    result2 = next((x for x in accounts if x["id"]==data.to_account),None)
-    if result1 is None or result2 is None:
         raise HTTPException(
             status_code=404,
             detail="Account not found"
         )
-    if data.amount <=0:
+
+    return result
+
+
+# Withdrawals
+
+@router.post("/accounts/{account_id}/withdraw")
+def withdraw(account_id: int, data: WithdrawRequest):
+
+    if data.amount <= 0:
         raise HTTPException(
             status_code=400,
-            detail="Invalid amount"
+            detail="Invalid withdrawal amount"
         )
-    if result1["id"]==result2["id"]:
+
+    account = get_account(account_id)
+
+    if account is None:
         raise HTTPException(
-            status_code=400,
-            detail="Source and receiver cannot be the same"
+            status_code=404,
+            detail="Account not found"
         )
-    if result1["balance"]<data.amount:
+
+    if data.amount > account.balance:
         raise HTTPException(
             status_code=400,
             detail="Insufficient balance"
         )
-    if result1["currency"] != result2["currency"]:
+
+    result = withdraw_account(account_id, data.amount)
+
+    # Record the transaction
+    from ledger.transactions import create_transaction
+
+    create_transaction(
+        amount=data.amount,
+        from_account=account_id,
+        to_account=None,
+        transaction_type="withdrawal"
+    )
+
+    return result
+
+
+# Deposits
+
+@router.post("/accounts/{account_id}/deposit")
+def deposit(account_id: int, data: DepositRequest):
+
+    if data.amount <= 0:
         raise HTTPException(
             status_code=400,
-            detail="cannnot tramsfer between two different currency"
+            detail="Invalid deposit amount"
         )
-    result1["balance"] -= data.amount
-    result2["balance"] += data.amount
+
+    result = deposit_account(account_id, data.amount)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Account not found"
+        )
+
+    # Record the transaction
+    from ledger.transactions import create_transaction
+
     create_transaction(
-            amount=data.amount,
-            from_account=data.from_account,
-            to_account=data.to_account,
-            transaction_type="transfer"
+        amount=data.amount,
+        from_account=None,
+        to_account=account_id,
+        transaction_type="deposit"
+    )
+
+    return result
+
+
+# Transfers
+
+@router.post("/transfer")
+def transfer(data: TransferRequest):
+
+    try:
+        result = transfer_account(
+            data.from_account,
+            data.to_account,
+            data.amount
         )
-    return {
-        "from_account": result1,
-        "to_account": result2
-    }
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Account not found"
+        )
+
+    return result
+
+
+# Transactions
 
 @router.get("/transactions")
 def read_transactions():
